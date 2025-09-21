@@ -48,6 +48,8 @@ dependencies = [
     "portalocker>=2.7.0",
     # MCP protocol
     "mcp>=1.4.0",
+    # TOML parsing (stdlib tomllib equivalent for Python 3.10)
+    "tomli>=2.0.1",
     # Git operations
     "GitPython",
     # Text analysis (keeping minimal set)

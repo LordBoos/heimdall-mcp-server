@@ -273,7 +273,7 @@ To maximize the effectiveness of Heimdall:
 
 | Command | Description |
 | :------ | :---------- |
-| `heimdall mcp install <platform>` | Install MCP server for platform (vscode, cursor, claude-code, visual-studio) |
+| `heimdall mcp install <platform>` | Install MCP server for platform (vscode, cursor, claude-code, visual-studio, codex) |
 | `heimdall mcp remove <platform>` | Remove MCP integration from platform |
 | `heimdall mcp status` | Show installation status for all platforms |
 | `heimdall mcp list` | List available platforms and installation status |
@@ -287,6 +287,7 @@ Heimdall MCP server is compatible with any platform that supports STDIO MCP serv
 - `cursor` - Cursor IDE
 - `claude-code` - Claude Code
 - `visual-studio` - Visual Studio
+- `codex` - Codex CLI (project-local CODEX_HOME config)
 
 ## Technology Stack:
 

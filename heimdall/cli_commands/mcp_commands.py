@@ -4,6 +4,7 @@ import json
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -11,6 +12,11 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from cognitive_memory.core.config import get_project_id
+
+try:  # Python 3.11+
+    import tomllib  # type: ignore[attr-defined]
+except ModuleNotFoundError:  # Python 3.10 fallback provided via dependency
+    import tomli as tomllib  # type: ignore[no-redef]
 
 console = Console()
 
@@ -74,7 +80,153 @@ PLATFORMS = {
         method="json_modify",
         detection_folders=[],  # Detect via CLI only, not folder
     ),
+    "codex": PlatformConfig(
+        name="Codex CLI",
+        config_file=".heimdall/codex/config.toml",
+        server_key="mcp_servers",
+        method="toml_project",
+        detection_folders=[],
+    ),
 }
+
+
+def get_codex_config_path() -> Path:
+    """Return project-local Codex config path."""
+
+    project_root = Path.cwd()
+    # Codex resolves MCP servers via CODEX_HOME/config.toml. We intentionally
+    # keep our config inside the repo so each project can opt-in without
+    # polluting the user's global ~/.codex directory.
+    return project_root / ".heimdall" / "codex" / "config.toml"
+
+
+def _load_toml_config(config_path: Path) -> dict[str, Any]:
+    """Load TOML configuration, returning an empty dict when missing/invalid."""
+
+    if not config_path.exists():
+        return {}
+
+    try:
+        return tomllib.loads(config_path.read_text())
+    except (tomllib.TOMLDecodeError, OSError):  # type: ignore[attr-defined]
+        return {}
+
+
+def _format_toml_value(value: Any) -> str:
+    """Format Python values into TOML-compatible strings."""
+
+    if isinstance(value, str):
+        escaped = value.replace("\\", "\\\\").replace("\"", "\\\"")
+        return f'"{escaped}"'
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, list):
+        inner = ", ".join(_format_toml_value(item) for item in value)
+        return f"[ {inner} ]" if inner else "[]"
+    if isinstance(value, dict):
+        items = ", ".join(
+            f"{key} = {_format_toml_value(val)}" for key, val in sorted(value.items())
+        )
+        return f"{{ {items} }}" if items else "{}"
+
+    raise TypeError(f"Unsupported TOML value type: {type(value)!r}")
+
+
+def _serialize_codex_config(config: dict[str, Any]) -> str:
+    """Serialize config dict into TOML with stable ordering."""
+
+    lines: list[str] = []
+
+    # Emit non-table values first (not currently used but keeps function generic)
+    for key in sorted(k for k in config.keys() if k != "mcp_servers"):
+        value = _format_toml_value(config[key])
+        lines.append(f"{key} = {value}")
+
+    if "mcp_servers" in config:
+        if lines:
+            lines.append("")
+        servers = config["mcp_servers"]
+        if isinstance(servers, dict):
+            for server_name in sorted(servers.keys()):
+                server_data = servers[server_name]
+                lines.append(f"[mcp_servers.{server_name}]")
+                if isinstance(server_data, dict):
+                    for field in ("command", "args", "env", "startup_timeout_ms"):
+                        if field in server_data:
+                            value = _format_toml_value(server_data[field])
+                            lines.append(f"{field} = {value}")
+                lines.append("")
+
+    content = "\n".join(lines).rstrip()
+    return f"{content}\n" if content else ""
+
+
+def _write_codex_config(config_path: Path, config: dict[str, Any]) -> None:
+    """Write TOML config to disk, ensuring parent directory exists."""
+
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(_serialize_codex_config(config))
+
+
+def _ensure_codex_config(server_config: ServerConfig, force: bool = False) -> None:
+    """Insert or update the Codex MCP server entry."""
+
+    config_path = get_codex_config_path()
+    config = _load_toml_config(config_path)
+
+    current_servers = config.setdefault("mcp_servers", {})
+    if not isinstance(current_servers, dict):
+        current_servers = {}
+        config["mcp_servers"] = current_servers
+
+    desired_entry = {
+        "command": server_config.command,
+        "args": server_config.args,
+        "env": server_config.env,
+    }
+
+    existing_entry = current_servers.get(server_config.name)
+
+    if existing_entry and not force:
+        existing_command = existing_entry.get("command")
+        existing_env = existing_entry.get("env", {}) if isinstance(existing_entry, dict) else {}
+        project_env = server_config.env.get("PROJECT_PATH", "")
+        env_matches = isinstance(existing_env, dict) and existing_env.get("PROJECT_PATH") == project_env
+
+        if existing_command != server_config.command or not env_matches:
+            console.print(
+                "⚠️  Codex config already contains this server with different settings"
+            )
+            console.print("   Current command: " + str(existing_command))
+            console.print(f"   Expected command: {server_config.command}")
+            console.print("   Use --force to overwrite the entry")
+            return
+
+    current_servers[server_config.name] = desired_entry
+    _write_codex_config(config_path, config)
+
+    console.print(f"✅ Codex MCP config written to: {config_path}")
+    console.print("   Launch Codex with this project config via:")
+    console.print(
+        f"   CODEX_HOME={config_path.parent} codex"
+    )
+
+
+def _render_codex_snippet(server_config: ServerConfig) -> str:
+    """Create TOML snippet for manual configuration."""
+
+    snippet = {
+        "mcp_servers": {
+            server_config.name: {
+                "command": server_config.command,
+                "args": server_config.args,
+                "env": server_config.env,
+            }
+        }
+    }
+    return _serialize_codex_config(snippet)
 
 
 def get_server_config() -> ServerConfig:
@@ -100,6 +252,7 @@ def detect_platforms() -> list[str]:
         "gemini": "gemini",
         "cursor": "cursor",
         "vscode": "code",
+        "codex": "codex",
     }
 
     for platform_id, config in PLATFORMS.items():
@@ -123,6 +276,11 @@ def detect_platforms() -> list[str]:
                 if platform_id not in detected:
                     detected.append(platform_id)
                 break
+
+        # Detect based on project-local config files
+        if config.config_file:
+            if (current_dir / config.config_file).exists() and platform_id not in detected:
+                detected.append(platform_id)
 
     return detected
 
@@ -156,6 +314,31 @@ def check_installation_status(platform_id: str, platform_config: PlatformConfig)
                 return "⚠️ CLI error"
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return "❌ Claude CLI unavailable"
+
+    elif platform_config.method == "toml_project":
+        config_path = find_config_file(platform_config)
+        if not config_path or not config_path.exists():
+            return "❌ Not configured"
+
+        config = _load_toml_config(config_path)
+        servers = config.get("mcp_servers")
+        if not isinstance(servers, dict):
+            return "⚠️ Invalid config"
+
+        server_entry = servers.get(server_config.name)
+        if not isinstance(server_entry, dict):
+            return "❌ Not configured"
+
+        command_matches = server_entry.get("command") == server_config.command
+        env = server_entry.get("env")
+        env_path = ""
+        if isinstance(env, dict):
+            env_path = str(env.get("PROJECT_PATH", ""))
+        expected_path = server_config.env.get("PROJECT_PATH", "")
+
+        if command_matches and env_path == expected_path:
+            return "✅ Installed"
+        return "⚠️ Outdated path"
 
     else:
         # Check JSON-based platforms
@@ -376,6 +559,17 @@ def install_mcp(
                 )
                 raise typer.Exit(1)
 
+        elif platform_config.method == "toml_project":
+            _ensure_codex_config(server_config, force)
+
+            status = check_installation_status(platform, platform_config)
+            if status == "✅ Installed":
+                console.print(
+                    f"🎉 Codex configuration ready for {platform_config.name}"
+                )
+            else:
+                console.print(f"⚠️  Installation status: {status}")
+
         elif platform_config.method == "cli_command":
             execute_claude_mcp_add(server_config, force)
 
@@ -393,6 +587,13 @@ def install_mcp(
         if platform == "claude-code":
             console.print("   • Restart Claude Code to load the new MCP server")
             console.print("   • Test with: claude tools list")
+        elif platform == "codex":
+            codex_config_home = get_codex_config_path().parent
+            console.print(
+                "   • Launch Codex with project-local config:"
+            )
+            console.print(f"     CODEX_HOME={codex_config_home} codex")
+            console.print("   • Optional: add --config-home PATH to your Codex alias")
         else:
             console.print(
                 f"   • Restart {platform_config.name} to load the new MCP server"
@@ -674,6 +875,33 @@ def generate_mcp(
                     )
                 console.print(f"✅ Command saved to: {output}")
 
+        elif platform_config.method == "toml_project":
+            snippet = _render_codex_snippet(server_config)
+
+            console.print(
+                f"\n[bold green]Configuration for {platform_config.config_file}:[/bold green]"
+            )
+            syntax = Syntax(snippet, "toml", theme="monokai", line_numbers=False)
+            console.print(syntax)
+
+            console.print("\n[bold blue]Instructions:[/bold blue]")
+            console.print(
+                "• Create the directory .heimdall/codex if it does not exist"
+            )
+            console.print(
+                f"• Write the snippet above to {platform_config.config_file}"
+            )
+            console.print(
+                "• Start Codex with CODEX_HOME pointing at .heimdall/codex"
+            )
+            console.print(
+                "  (e.g. CODEX_HOME=.heimdall/codex codex --exec)")
+
+            if output:
+                output_path = Path(output)
+                output_path.write_text(snippet)
+                console.print(f"✅ Configuration saved to: {output}")
+
         else:
             # Generate JSON config for IDE platforms
             config_snippet = generate_config_snippet(platform_config, server_config)
@@ -748,6 +976,11 @@ def install_mcp_interactive(platform_id: str, force: bool = False) -> bool:
                 return status == "✅ Installed"
             else:
                 return False
+
+        elif platform_config.method == "toml_project":
+            _ensure_codex_config(server_config, force)
+            status = check_installation_status(platform_id, platform_config)
+            return status == "✅ Installed"
 
         elif platform_config.method == "cli_command":
             execute_claude_mcp_add(server_config, force)
