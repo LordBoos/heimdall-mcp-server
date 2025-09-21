@@ -1,6 +1,6 @@
 # Heimdall MCP Server - Your AI Coding Assistant's Long-Term Memory
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://pypi.org/project/heimdall-mcp/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://pypi.org/project/heimdall-mcp/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](hhttps://github.com/lcbcFoo/heimdall-mcp-server/blob/main/README.mdttps://opensource.org/licenses/Apache-2.0)
 [![MCP Protocol](https://img.shields.io/badge/MCP-compatible-brightgreen.svg)](https://modelcontextprotocol.io/)
 [![Heimdall Demo Video](https://img.shields.io/badge/YouTube-red)](https://youtu.be/7X1gntAXsao)
@@ -24,7 +24,7 @@ https://github.com/user-attachments/assets/120b3d32-72d1-4d42-b3ab-285e8a711981
 
 ## 🚀 Getting Started
 
-**Prerequisites**: Python 3.10+ and Docker (for Qdrant vector database).
+**Prerequisites**: Python 3.11+ and Docker (for Qdrant vector database).
 
 Heimdall provides a unified `heimdall` CLI that manages everything from project setup to MCP integration.
 
@@ -273,7 +273,7 @@ To maximize the effectiveness of Heimdall:
 
 | Command | Description |
 | :------ | :---------- |
-| `heimdall mcp install <platform>` | Install MCP server for platform (vscode, cursor, claude-code, visual-studio) |
+| `heimdall mcp install <platform>` | Install MCP server for platform (vscode, cursor, claude-code, visual-studio, codex) |
 | `heimdall mcp remove <platform>` | Remove MCP integration from platform |
 | `heimdall mcp status` | Show installation status for all platforms |
 | `heimdall mcp list` | List available platforms and installation status |
@@ -287,10 +287,11 @@ Heimdall MCP server is compatible with any platform that supports STDIO MCP serv
 - `cursor` - Cursor IDE
 - `claude-code` - Claude Code
 - `visual-studio` - Visual Studio
+- `codex` - Codex CLI (project-local CODEX_HOME config)
 
 ## Technology Stack:
 
-- Python 3.10
+- Python 3.11+
 - Vector Storage: Qdrant
 - Mmeory information and metadata: SQLite
 - Embeddings: all-MiniLM-L6-v2

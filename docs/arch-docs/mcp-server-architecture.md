@@ -11,7 +11,7 @@ The Heimdall MCP Server provides LLMs with persistent memory capabilities across
 
 ### Step 1: Install Heimdall
 ```bash
-# Install via pip (requires Python 3.10+)
+# Install via pip (requires Python 3.11+)
 pip install heimdall-mcp
 
 # Verify installation
@@ -85,6 +85,24 @@ Add to `config.json`:
 ```bash
 roo config mcp add heimdall python -m heimdall.mcp_server
 ```
+
+#### Codex CLI
+Heimdall creates **project-local** Codex configuration to avoid mutating the global
+`~/.codex` directory. Run:
+
+```bash
+heimdall mcp install codex
+```
+
+This writes `.heimdall/codex/config.toml` with the project-scoped MCP entry.
+Launch Codex by pointing `CODEX_HOME` at that directory:
+
+```bash
+CODEX_HOME=.heimdall/codex codex
+```
+
+You can bake the `CODEX_HOME` override into shell aliases or wrapper scripts so
+each project loads its dedicated Heimdall server configuration.
 
 #### Other MCP Clients
 Generic configuration:

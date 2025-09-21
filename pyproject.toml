@@ -7,7 +7,7 @@ name = "heimdall-mcp"
 version = "0.3.5"
 description = "Persistent, project-aware, long-term memory for AI coding assistants"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "Apache 2.0"}
 authors = [
     {name = "Lucas Castro"},
@@ -19,7 +19,6 @@ classifiers = [
       "License :: OSI Approved :: Apache Software License",
       "Operating System :: OS Independent",
       "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.11",
       "Programming Language :: Python :: 3.12",
       "Programming Language :: Python :: 3.13",
@@ -48,6 +47,9 @@ dependencies = [
     "portalocker>=2.7.0",
     # MCP protocol
     "mcp>=1.4.0",
+    # Typing stubs required by mypy/CI
+    "types-PyYAML",
+    "types-requests",
     # Git operations
     "GitPython",
     # Text analysis (keeping minimal set)
@@ -66,8 +68,6 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pre-commit>=3.0.0",
     "pip-tools>=7.0.0",
-    "types-requests",
-    "types-PyYAML"
 ]
 test = [
     "pytest>=7.0.0",

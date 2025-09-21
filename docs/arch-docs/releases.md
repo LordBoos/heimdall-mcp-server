@@ -8,7 +8,7 @@ This document describes the release management process for the Heimdall MCP pack
 
 The package uses modern Python packaging standards defined in `pyproject.toml`:
 - Package name: `heimdall-mcp`
-- Python 3.10+ compatibility
+- Python 3.11+ compatibility
 - CLI entry points for `cognitive-cli` and `memory_system` commands
 - Comprehensive dependency management
 
