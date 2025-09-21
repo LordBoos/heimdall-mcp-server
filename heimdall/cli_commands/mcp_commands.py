@@ -5,7 +5,6 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-import sys
 
 import typer
 from rich.console import Console
@@ -14,9 +13,9 @@ from rich.table import Table
 
 from cognitive_memory.core.config import get_project_id
 
-if sys.version_info >= (3, 11):  # pragma: no cover - version gated
+try:
     import tomllib
-else:  # pragma: no cover - exercised in lower Python versions
+except ModuleNotFoundError:  # pragma: no cover - lower Python versions
     import tomli as tomllib
 
 console = Console()
