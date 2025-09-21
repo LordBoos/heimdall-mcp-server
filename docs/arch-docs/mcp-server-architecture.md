@@ -11,7 +11,7 @@ The Heimdall MCP Server provides LLMs with persistent memory capabilities across
 
 ### Step 1: Install Heimdall
 ```bash
-# Install via pip (requires Python 3.10+)
+# Install via pip (requires Python 3.11+)
 pip install heimdall-mcp
 
 # Verify installation

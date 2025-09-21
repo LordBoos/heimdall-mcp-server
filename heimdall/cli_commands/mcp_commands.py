@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -12,11 +13,6 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from cognitive_memory.core.config import get_project_id
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - lower Python versions
-    import tomli as tomllib
 
 console = Console()
 
@@ -108,7 +104,7 @@ def _load_toml_config(config_path: Path) -> dict[str, Any]:
 
     try:
         return tomllib.loads(config_path.read_text())
-    except (tomllib.TOMLDecodeError, OSError):  # type: ignore[attr-defined]
+    except (tomllib.TOMLDecodeError, OSError):
         return {}
 
 

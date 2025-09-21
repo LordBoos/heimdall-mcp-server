@@ -259,7 +259,7 @@ memory_system project clean my_project_abc123 --yes
 - [x] Add support for both `docker compose` and `docker-compose` commands
 
 **Implementation Details**:
-- **Package Configuration**: Updated `pyproject.toml` with proper metadata, version 0.2.2, broader Python support (3.10+), and enhanced classifiers
+- **Package Configuration**: Updated `pyproject.toml` with proper metadata, version 0.2.2, broader Python support (3.11+), and enhanced classifiers
 - **Installation Documentation**: Completely rewrote `README.md` installation section with new pip workflow, replaced Docker container setup with simple `pip install heimdall-mcp`
 - **CLI Testing**: Successfully tested both `cognitive-cli` and `memory_system` command interfaces work correctly when installed
 - **Release Automation**: Created comprehensive release infrastructure:
@@ -273,7 +273,7 @@ memory_system project clean my_project_abc123 --yes
 **Key Achievements**:
 - **Standard Python Packaging**: Clean pip install workflow with no external dependencies
 - **Automated Release Pipeline**: Both manual and GitHub Actions-based release workflows
-- **Cross-Platform Compatibility**: Works on Windows, macOS, Linux with Python 3.10+
+- **Cross-Platform Compatibility**: Works on Windows, macOS, Linux with Python 3.11+
 - **Embedded Resources**: No external file dependencies for Docker compose templates
 - **Comprehensive Documentation**: Complete release process and troubleshooting guides
 

@@ -5,7 +5,7 @@ Thank you for your interest in contributing to Heimdall! This document outlines 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.10+ (3.11+ recommended)
+- Python 3.11+
 - Docker and Docker Compose
 - Git
 
