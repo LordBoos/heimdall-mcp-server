@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+import sys
 
 import typer
 from rich.console import Console
@@ -13,10 +14,10 @@ from rich.table import Table
 
 from cognitive_memory.core.config import get_project_id
 
-try:  # Python 3.11+
-    import tomllib  # type: ignore[attr-defined]
-except ModuleNotFoundError:  # Python 3.10 fallback provided via dependency
-    import tomli as tomllib  # type: ignore[no-redef]
+if sys.version_info >= (3, 11):  # pragma: no cover - version gated
+    import tomllib
+else:  # pragma: no cover - exercised in lower Python versions
+    import tomli as tomllib
 
 console = Console()
 
